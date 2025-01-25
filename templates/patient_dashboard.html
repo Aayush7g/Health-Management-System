@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .btn {
+            margin: 10px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #hospital-list {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .hospital-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #location-error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Welcome, Patient</h1>
+
+        <!-- Book Appointment Section -->
+        <h2>Book an Appointment</h2>
+        <form action="{{ url_for('book_appointment') }}" method="POST" class="card p-3">
+            <div class="mb-3">
+                <label for="doctor_id" class="form-label">Select Doctor:</label>
+                <select name="doctor_id" id="doctor_id" class="form-control" required>
+                    {% for doctor in doctors %}
+                    <option value="{{ doctor.user_id }}">{{ doctor.screen_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="appointment_date" class="form-label">Appointment Date:</label>
+                <input type="datetime-local" name="appointment_date" id="appointment_date" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-success">Book Appointment</button>
+        </form>
+
+        <!-- Medical Records Section -->
+        <h2 class="my-4">Your Medical Records</h2>
+        <div class="list-group">
+            {% for record in medical_records %}
+            <div class="list-group-item">
+                <strong>Date:</strong> {{ record.record_date }}<br>
+                <strong>Diagnosis:</strong> {{ record.diagnosis }}<br>
+                <strong>Prescription:</strong> {{ record.prescription }}<br>
+                <strong>Notes:</strong> {{ record.notes }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Nearby Hospitals Locator Section -->
+        <h2 class="my-4">Nearby Hospitals Locator</h2>
+        <div id="map"></div>
+        <div id="hospital-list">
+            <h3>Closest Hospitals</h3>
+            <ul id="hospitals"></ul>
+        </div>
+        <div id="location-error"></div>
+
+        <!-- Logout Button -->
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Haversine formula to calculate distance between two points (in km)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in km
+        }
+
+        function initMap() {
+            if (navigator.geolocation) {
+                // Request high-accuracy location
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        // Initialize the map
+                        const map = L.map('map').setView([userLocation.lat, userLocation.lng], 14);
+
+                        // Add OpenStreetMap tiles
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '© OpenStreetMap contributors'
+                        }).addTo(map);
+
+                        // Add a marker for the user's location
+                        L.marker([userLocation.lat, userLocation.lng]).addTo(map)
+                            .bindPopup("Your Location").openPopup();
+
+                        // Fetch nearby hospitals using Overpass API
+                        const query = `
+                            [out:json];
+                            node["amenity"="hospital"](around:5000,${userLocation.lat},${userLocation.lng});
+                            out;`;
+
+                        fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const hospitals = data.elements.slice(0, 3); // Get the first 3 hospitals
+                                const hospitalsList = document.getElementById('hospitals');
+                                hospitalsList.innerHTML = ''; // Clear the list
+
+                                hospitals.forEach(hospital => {
+                                    // Calculate distance to the hospital
+                                    const distance = calculateDistance(userLocation.lat, userLocation.lng, hospital.lat, hospital.lon);
+
+                                    // Add a marker for each hospital on the map
+                                    L.marker([hospital.lat, hospital.lon]).addTo(map)
+                                        .bindPopup(`${hospital.tags.name || "Unnamed Hospital"}<br>Distance: ${distance.toFixed(2)} km`);
+
+                                    // Add hospital to the list on the side
+                                    const li = document.createElement('li');
+                                    li.className = 'hospital-item';
+                                    li.textContent = `${hospital.tags.name || "Unnamed Hospital"} - ${distance.toFixed(2)} km`;
+                                    hospitalsList.appendChild(li);
+                                });
+                            })
+                            .catch(error => {
+                                document.getElementById('location-error').textContent = 'Failed to fetch hospital data. Please try again later.';
+                            });
+                    },
+                    (error) => {
+                        // Handle geolocation errors
+                        let errorMessage = 'Error: Unable to access your location.';
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Permission denied. Please enable location access in your browser settings.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'The request to get your location timed out.';
+                                break;
+                        }
+                        document.getElementById('location-error').textContent = errorMessage;
+                    },
+                    {
+                        enableHighAccuracy: true, // Request high-accuracy location
+                        timeout: 10000, // Wait up to 10 seconds for location
+                        maximumAge: 0 // Do not use a cached location
+                    }
+                );
+            } else {
+                document.getElementById('location-error').textContent = 'Geolocation is not supported by your browser.';
+            }
+        }
+
+        // Load the map after the page is loaded
+        window.onload = initMap;
+    </script>
+</body>
+</html>
