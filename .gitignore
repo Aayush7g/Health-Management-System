@@ -1,0 +1,5 @@
+# Environment Variables
+.env
+
+# Ignore the 'uploads' folder and its contents
+No upload/
