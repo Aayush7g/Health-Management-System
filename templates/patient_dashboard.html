@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -46,16 +50,44 @@
             color: red;
             margin-top: 10px;
         }
+        .medical-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+        .medical-card strong {
+            font-weight: bold;
+            color: #333;
+        }
+        .medical-card img {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .download-btn {
+            margin-top: 10px;
+        }
     </style>
 </head>
-<body>
+
+
+<body class="bg-gradient-to-r from-blue-100 to-violet-100">
+    <nav class="flex justify-between items-center p-4 bg-white-600 text-blue navbar fixed-top bg-body-tertiary ">
+        <h1 class="text-4xl font-bold " style="font-family: Verdana, sans-serif;">Patient Dashboard </h1>
+         <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </nav>  
     <div class="container">
-        <h1 class="my-4">Welcome, Patient</h1>
+        <h1 class="my-4 mb-10"> Patient</h1>
 
         <!-- Book Appointment Section -->
-        <h2>Book an Appointment</h2>
-        <form action="{{ url_for('book_appointment') }}" method="POST" class="card p-3">
-            <div class="mb-3">
+        <h2 class="mb-3 mt-10 text-2xl p-3 font-bold">Book an Appointment</h2>
+        <form action="{{ url_for('book_appointment') }}" method="POST" class="card p-3 w-50">
+            <div class="mb-3 mt-3">
                 <label for="doctor_id" class="form-label">Select Doctor:</label>
                 <select name="doctor_id" id="doctor_id" class="form-control" required>
                     {% for doctor in doctors %}
@@ -67,33 +99,143 @@
                 <label for="appointment_date" class="form-label">Appointment Date:</label>
                 <input type="datetime-local" name="appointment_date" id="appointment_date" class="form-control" required>
             </div>
-            <button type="submit" class="btn btn-success">Book Appointment</button>
+            
+            <script>
+                // Function to set min attribute dynamically
+                function setMinDateTime() {
+                    let now = new Date();
+                    
+                    // Format the date and time as 'YYYY-MM-DDTHH:MM' (required for datetime-local input)
+                    let year = now.getFullYear();
+                    let month = String(now.getMonth() + 1).padStart(2, '0');
+                    let day = String(now.getDate()).padStart(2, '0');
+                    let hours = String(now.getHours()).padStart(2, '0');
+                    let minutes = String(now.getMinutes()).padStart(2, '0');
+            
+                    let minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+                    // Set min attribute to prevent past selections
+                    document.getElementById('appointment_date').setAttribute('min', minDateTime);
+                }
+            
+                // Set minDateTime on page load
+                setMinDateTime();
+            </script>
+            
+            <button type="submit" class="bg-blue-200 text-black px-4 py-2 rounded">Book Appointment</button>
+
         </form>
 
         <!-- Medical Records Section -->
-        <h2 class="my-4">Your Medical Records</h2>
-        <div class="list-group">
-            {% for record in medical_records %}
-            <div class="list-group-item">
-                <strong>Date:</strong> {{ record.record_date }}<br>
-                <strong>Diagnosis:</strong> {{ record.diagnosis }}<br>
-                <strong>Prescription:</strong> {{ record.prescription }}<br>
-                <strong>Notes:</strong> {{ record.notes }}
+        <h2 class="my-4 text-2xl font-bold-100">Your Medical Records</h2>
+       
+
+
+    
+        
+        <div class="container" class="card" style="width: 68rem; display: flex; flex-wrap: wrap;">
+            <div class="row">
+                {% for record in medical_records %}
+                <div class="col-md-6">
+                    <div class="medical-card">
+                        <strong>Date:</strong> {{ record.record_date }}<br>
+                        <strong>Diagnosis:</strong> {{ record.diagnosis }}<br>
+                        <strong>Prescription:</strong> {{ record.prescription }}<br>
+                        <strong>Notes:</strong> {{ record.notes }}<br>
+        
+                        <!-- File Icons with Click Event -->
+                        {% if record.image_data %}
+                        <a href="#" onclick="openModal('{{ url_for('get_medical_image', image_type='image_data', record_id=record.record_id) }}', 'Image')">
+                            <button style="font-size:10px;border-radius:10px;height:2rem">View Image <i class="fa fa-file-image-o" style="font-size:14px;color:blue"></i></button>
+                        </a>
+                        {% endif %}
+                        
+                        {% if record.x_ray_image %}
+                        <a href="#" onclick="openModal('{{ url_for('get_medical_image', image_type='x_ray_image', record_id=record.record_id) }}', 'X-Ray')">
+                            <button style="font-size:10px;border-radius:10px;height:2rem">View X-Ray <i class="fa fa-file-image-o" style="font-size:14px;color:blue"></i></button>
+                        </a>
+                        {% endif %}
+                        
+                        {% if record.lab_report %}
+                        <a href="#" onclick="openModal('{{ url_for('get_medical_image', image_type='lab_report', record_id=record.record_id) }}', 'Lab Report')">
+                            <button style="font-size:10px;border-radius:10px;height:2rem">View Lab Report <i class="fa fa-file-pdf-o" style="font-size:14px;color:red;"></i></button>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
+        
+        
+        <!-- Modal Popup -->
+        <div id="imageModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <img id="modalImage" src="" alt="Medical Record" class="img-fluid">
+            </div>
+        </div>
+        
+        <!-- CSS for Modal -->
+        <style>
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.7);
+            }
+            .modal-content {
+                margin: 10% auto;
+                padding: 20px;
+                width: 50%;
+                background: white;
+                text-align: center;
+            }
+            .close {
+                float: right;
+                font-size: 28px;
+                cursor: pointer;
+            }
+            .img-fluid {
+                max-width: 100%;
+                height: auto;
+            }
+        </style>
+        
+        <!-- JavaScript for Modal -->
+        <script>
+            function openModal(imageSrc, imageType) {
+                let modal = document.getElementById("imageModal");
+                let modalImage = document.getElementById("modalImage");
+                modal.style.display = "block";
+                modalImage.src = imageSrc;
+            }
+        
+            function closeModal() {
+                document.getElementById("imageModal").style.display = "none";
+            }
+        </script>
+        
+        
 
         <!-- Nearby Hospitals Locator Section -->
-        <h2 class="my-4">Nearby Hospitals Locator</h2>
-        <div id="map"></div>
+        <h2 class="my-4 text-2xl font-bold-200">Nearby Hospitals Locator</h2>
+        <p>Find the closest hospitals to your location:</p>
+
+        <div class="">
+        <div id="map" class="w-5 p-15"></div>
         <div id="hospital-list">
             <h3>Closest Hospitals</h3>
             <ul id="hospitals"></ul>
         </div>
         <div id="location-error"></div>
-
+    </div>
         <!-- Logout Button -->
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+       
     </div>
 
     <!-- Leaflet JS -->

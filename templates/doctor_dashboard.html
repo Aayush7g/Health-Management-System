@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f8f9fa;
-            padding: 20px;
+        #show{
+            font-size: 15px;
+            font-weight: bold;
+            color:rgb(116, 151, 222);
+            margin: 10px;
+            padding: 10px;
         }
         .container {
             max-width: 1200px;
@@ -26,40 +30,106 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        #box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        #box:hover {
+            background-color: rgb(162, 224, 177); /* Green background on hover */
+            transform: translateY(-5px); /* Adds a subtle lift effect */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Adds a shadow effect */
+        }
+        #box.visited {
+            background-color: rgb(54, 162, 94); /* Green background when visited */
+        }
+        #box:hover img {
+            border: 1px solid white; /* Add border to image when hovered */
+        }
+        #box_inside{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            box-shadow: 0 0 10px rgba(119, 181, 214, 0.1);
+            transition: background-color 0.3s ease;
+        }
     </style>
 </head>
-<body>
+<body class="bg-gradient-to-r from-blue-500 to-purple-500">
     <div class="container">
-        <h1 class="my-4">Welcome, Doctor</h1>
+        <h1 class="bold text-black-500 pt-10 ">Welcome, Dr {{ doctor_name.screen_name }}</h1>
+        <h2 class="text-black bold">Your Appointments</h2>
+        <div class="doctor-dashboard">
+            <div class="appointments-list flex flex-wrap space-x-4 space-y-4">
+                {% for appointment in appointments %}
+                <div id="box" class="appointment-item flex bg-blue rounded-lg shadow-md border border-gray-200 p-6 transition-all hover:shadow-lg" onclick="changeBackgroundColor(this)">
+                    <div>
+                        <img src="{{ url_for('get_profile_picture', patient_id=appointment['patient_id']) }}" 
+                             alt="Profile Picture" 
+                             style="width: 100px; height: 100px; border-radius: 50%;"
+                             onerror="this.onerror=null; this.src='/path/to/default-image.jpg';"> 
+                    </div>
 
-        <!-- Appointments Section -->
-        <h2>Your Appointments</h2>
-        <div class="list-group">
-            {% for appointment in appointments %}
-            <div class="list-group-item">
-                <strong>Patient ID:</strong> {{ appointment.patient_id }}<br>
-                <strong>Date:</strong> {{ appointment.appointment_date }}
+                    <div class="appointment-item ml-4">
+                        <strong id="show">Appointment ID:</strong> {{ appointment['appointment_id'] }}<br>
+                        <strong id="show">Patient ID:</strong> {{ appointment['patient_id'] }}<br>
+                        <strong id="show">Date:</strong> {{ appointment['appointment_date'] }}<br>
+                    </div>                  
+
+                    <div>
+                        <a href="{{ url_for('add_medical_record_form', patient_id=appointment['patient_id']) }}">
+                            <button type="button" class="btn btn-primary">Add Medical Record</button>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}    
             </div>
-            {% endfor %}
         </div>
 
-        <!-- Medical Records Section -->
-        <h2 class="my-4">Medical Records of Your Patients</h2>
-        <div class="list-group">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 mt-8 px-4 text-white">Medical Records of Your Patients</h2>
+        <div class="space-y-4 px-4">
             {% for record in medical_records %}
-            <div class="list-group-item">
-                <strong>Patient:</strong> {{ record.patient_name }}<br>
-                <strong>Date:</strong> {{ record.record_date }}<br>
-                <strong>Diagnosis:</strong> {{ record.diagnosis }}<br>
-                <strong>Prescription:</strong> {{ record.prescription }}<br>
-                <strong>Notes:</strong> {{ record.notes }}
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 transition-all hover:shadow-lg">
+                <div class="space-y-3 m-2" id="box_inside">
+                    <div class="flex items-baseline">
+                        <span class="text-lg font-semibold text-blue-600">{{ record.patient_name }}</span>
+                        <span class="text-sm text-gray-500 ml-2">{{ record.record_date }}</span>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div>
+                            <span class="font-semibold text-gray-700">Diagnosis:</span>
+                            <p class="text-gray-600 mt-1 ml-4">{{ record.diagnosis }}</p>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold text-gray-700">Prescription:</span>
+                            <p class="text-gray-600 mt-1 ml-4">{{ record.prescription }}</p>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold text-gray-700">Notes:</span>
+                            <p class="text-gray-600 mt-1 ml-4 whitespace-pre-wrap">{{ record.notes }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% endfor %}
         </div>
 
         <!-- Add Medical Record Form -->
-        <h2 class="my-4">Add Medical Record</h2>
-        <form action="{{ url_for('add_medical_record') }}" method="POST" class="card p-3">
+        <h2 class="my-5 text-black">Add Medical Record</h2>
+        <form action="{{ url_for('add_medical_record') }}" method="POST" class="card p-4" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="patient_id" class="form-label">Patient ID:</label>
                 <input type="text" name="patient_id" id="patient_id" class="form-control" required>
@@ -76,11 +146,23 @@
                 <label for="notes" class="form-label">Notes:</label>
                 <textarea name="notes" id="notes" class="form-control"></textarea>
             </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Upload Medical Image:</label>
+                <input type="file" name="image" id="image" class="form-control">
+            </div>
+
             <button type="submit" class="btn btn-primary">Add Record</button>
         </form>
 
         <!-- Logout Button -->
         <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
     </div>
+
+    <script>
+        // Function to change the background color when clicked
+        function changeBackgroundColor(element) {
+            element.classList.toggle('visited'); // Toggles the 'visited' class which changes background color
+        }
+    </script>
 </body>
 </html>

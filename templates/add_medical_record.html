@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Medical Record</title>
+</head>
+<body>
+    <h2>Add Medical Record</h2>
+    
+    <form action="{{ url_for('add_medical_record') }}" method="POST" enctype="multipart/form-data"> 
+        <input type="hidden" name="patient_id" value="{{ patient_id }}">
+
+        <label for="diagnosis">Diagnosis:</label>
+        <input type="text" name="diagnosis" required><br>
+        
+        <label for="prescription">Prescription:</label>
+        <input type="text" name="prescription" required><br>
+        
+        <label for="notes">Notes:</label>
+        <textarea name="notes"></textarea><br>
+
+        <div class="mb-3">
+            <label for="medical_image" class="form-label">Upload Medical Image:</label>
+            <input type="file" name="medical_image" id="medical_image" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label for="x_ray_image" class="form-label">Upload X-Ray Image:</label>
+            <input type="file" name="x_ray_image" id="x_ray_image" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label for="lab_report" class="form-label">Upload Lab Report:</label>
+            <input type="file" name="lab_report" id="lab_report" class="form-control">
+        </div>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
