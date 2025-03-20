@@ -42,18 +42,21 @@ Follow these steps to set up the project locally.
 
 
 Set Up a Virtual Environment:
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
 Set Up the Database:
 Create a MySQL database named health_management.
 Update the database configuration in the .env file:
 
+```
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=health_management
-
+```
 
 Usage
 For Patients
