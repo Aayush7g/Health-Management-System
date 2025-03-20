@@ -1,5 +1,18 @@
 # Environment Variables
 .env
 
+# Secret Key
+SECRET_KEY=your_generated_or_hardcoded_secret_key
+
+# Twitter API Keys
+TWITTER_API_KEY = 'SPKgXIELGJox0MAgaEBdZvGJT'
+TWITTER_API_SECRET = 'ex1BTKY8Xuv6R97q44JA1AVATvo602wp6SIsL28pAP0XhxlJk6'
+
+# MySQL Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=Comp@l1w3
+DB_NAME=health_management
+
 # Ignore the 'uploads' folder and its contents
 No upload/
