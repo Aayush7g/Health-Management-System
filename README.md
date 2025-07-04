@@ -24,7 +24,7 @@ For more details, visit the [AI-driven health assistant repository](https://gith
 - **Backend:** Flask (Python)
 - **Frontend:** HTML, CSS, Bootstrap
 - **Database:** MySQL
-- **APIs:** Twitter OAuth for authentication, Overpass API for hospital data
+- **APIs:** Twitter OAuth for authentication, Overpass API for hospital data.
 - **Mapping:** Leaflet.js for interactive maps
 - **AI Integration:** Streamlit, LangChain, Ollama
 
